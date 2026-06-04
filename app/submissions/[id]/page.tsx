@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useCallback, useEffect, useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Submission, Reviewer } from '@/types'
 
@@ -28,19 +28,21 @@ export default function SubmissionDetailPage({ params }: { params: Promise<{ id:
       .then(setSubmission)
   }, [id])
 
-  useEffect(() => {
-    if (submission?.status === 'ready' || submission?.status === 'assigned') {
-      loadCandidates()
-    }
-  }, [submission?.status])
-
-  const loadCandidates = async () => {
+  const loadCandidates = useCallback(async () => {
     setLoadingCandidates(true)
     const res = await fetch(`/api/submissions/${id}/candidates`)
     const data = await res.json()
     setCandidates(Array.isArray(data) ? data : [])
     setLoadingCandidates(false)
-  }
+  }, [id])
+
+  useEffect(() => {
+    // statusがready/assignedになったら候補を取得する意図的なデータfetch
+    if (submission?.status === 'ready' || submission?.status === 'assigned') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      loadCandidates()
+    }
+  }, [submission?.status, loadCandidates])
 
   const handleAnalyze = async () => {
     setAnalyzing(true)

@@ -30,7 +30,7 @@ JSON配列形式のみで返してください。例: ["機械学習", "深層�
   try {
     const result = await model.generateContent(prompt)
     const text = result.response.text().trim()
-    const jsonMatch = text.match(/\[.*\]/s)
+    const jsonMatch = text.match(/\[[\s\S]*\]/)
     const tags: string[] = jsonMatch ? JSON.parse(jsonMatch[0]) : []
 
     await supabase
@@ -39,7 +39,7 @@ JSON配列形式のみで返してください。例: ["機械学習", "深層�
       .eq('id', id)
 
     return NextResponse.json({ tags })
-  } catch (e) {
+  } catch {
     await supabase.from('submissions').update({ status: 'pending' }).eq('id', id)
     return NextResponse.json({ error: 'AI分析に失敗しました' }, { status: 500 })
   }
