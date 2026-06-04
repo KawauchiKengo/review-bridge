@@ -19,12 +19,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="font-bold text-xl text-blue-700 tracking-tight">
               Review Bridge
             </Link>
-            <Link
-              href="/submissions/new"
-              className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              + 査読依頼を登録
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/x-posts"
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                X投稿候補
+              </Link>
+              <Link
+                href="/submissions/new"
+                className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                + 査読依頼を登録
+              </Link>
+            </div>
           </div>
         </header>
         <main className="max-w-5xl mx-auto px-4 py-8">{children}</main>
