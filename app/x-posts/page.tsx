@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { XPostResult } from '@/types'
+import type { XPostResult, XReplyResult } from '@/types'
+
+type Mode = 'news' | 'reply'
 
 const STYLE_STORAGE_KEY = 'x-posts-style-samples'
 
@@ -30,12 +32,15 @@ const PROFILE_STORAGE_KEY = 'x-posts-author-profile'
 const DEFAULT_AUTHOR_PROFILE = `元証券マン、元高校野球監督、元エチオピア住民。小さな会社（tenaadam.co.jp）を経営。大学院の博士課程後期に在籍。横浜在住。趣味は釣りとボート。1982年生まれ。`
 
 export default function XPostsPage() {
+  const [mode, setMode] = useState<Mode>('news')
   const [news, setNews] = useState('')
+  const [replyTarget, setReplyTarget] = useState('')
   const [styleSamples, setStyleSamples] = useState('')
   const [authorProfile, setAuthorProfile] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<XPostResult | null>(null)
+  const [replyResult, setReplyResult] = useState<XReplyResult | null>(null)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
 
   // 過去投稿の見本はブラウザに保存し、毎回貼り直さずに済むようにする。
@@ -59,15 +64,28 @@ export default function XPostsPage() {
     localStorage.setItem(PROFILE_STORAGE_KEY, value)
   }
 
+  const switchMode = (next: Mode) => {
+    setMode(next)
+    setError('')
+    setResult(null)
+    setReplyResult(null)
+  }
+
   const handleGenerate = async () => {
     setLoading(true)
     setError('')
     setResult(null)
+    setReplyResult(null)
 
-    const res = await fetch('/api/x-posts', {
+    const endpoint = mode === 'news' ? '/api/x-posts' : '/api/x-posts/reply'
+    const body = mode === 'news'
+      ? { news, style_samples: styleSamples, author_profile: authorProfile }
+      : { target_post: replyTarget, style_samples: styleSamples, author_profile: authorProfile }
+
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ news, style_samples: styleSamples, author_profile: authorProfile }),
+      body: JSON.stringify(body),
     })
 
     if (!res.ok) {
@@ -77,9 +95,13 @@ export default function XPostsPage() {
       return
     }
 
-    setResult(await res.json())
+    const data = await res.json()
+    if (mode === 'news') setResult(data)
+    else setReplyResult(data)
     setLoading(false)
   }
+
+  const inputEmpty = mode === 'news' ? news.trim().length === 0 : replyTarget.trim().length === 0
 
   const copyPost = async (text: string, index: number) => {
     await navigator.clipboard.writeText(text)
@@ -92,23 +114,57 @@ export default function XPostsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">X投稿候補を生成</h1>
         <p className="text-sm text-gray-500 mt-1">
-          ニュースの「肝（蝶番）」を特定し、読者の予想を変える深い投稿候補を提案します
+          {mode === 'news'
+            ? 'ニュースの「肝（蝶番）」を特定し、読者の予想を変える深い投稿候補を提案します'
+            : '相手の投稿に、あなたの横断視点で新しい角度を足す返信候補を提案します'}
         </p>
       </div>
 
+      <div className="flex gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => switchMode('news')}
+          className={`flex-1 text-sm py-2 rounded-lg border transition-colors ${mode === 'news' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+        >
+          ニュースから投稿
+        </button>
+        <button
+          type="button"
+          onClick={() => switchMode('reply')}
+          className={`flex-1 text-sm py-2 rounded-lg border transition-colors ${mode === 'reply' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+        >
+          リプライを作る
+        </button>
+      </div>
+
       <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            ニュース本文 <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            value={news}
-            onChange={e => setNews(e.target.value)}
-            rows={8}
-            placeholder="深掘りしたいニュースの本文や要点を貼り付けてください"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          />
-        </div>
+        {mode === 'news' ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              ニュース本文 <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={news}
+              onChange={e => setNews(e.target.value)}
+              rows={8}
+              placeholder="深掘りしたいニュースの本文や要点を貼り付けてください"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            />
+          </div>
+        ) : (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              返信先の投稿 <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              value={replyTarget}
+              onChange={e => setReplyTarget(e.target.value)}
+              rows={6}
+              placeholder="リプライしたい相手の投稿を貼り付けてください（格上アカウントへの的確な返信が新規フォロー流入の主経路になります）"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            />
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -146,10 +202,10 @@ export default function XPostsPage() {
         <button
           type="button"
           onClick={handleGenerate}
-          disabled={loading || news.trim().length === 0}
+          disabled={loading || inputEmpty}
           className="w-full bg-blue-600 text-white text-sm py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
-          {loading ? '思考中...' : '投稿候補を生成'}
+          {loading ? '思考中...' : mode === 'news' ? '投稿候補を生成' : '返信候補を生成'}
         </button>
       </div>
 
@@ -175,12 +231,42 @@ export default function XPostsPage() {
                 </button>
               </div>
 
-              <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{c.post}</p>
+              <p className="text-xs text-gray-400">1行目（フック）</p>
+              <p className="text-sm font-medium text-gray-900 leading-relaxed">{c.hook}</p>
+
+              <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed border-t border-gray-100 pt-3">{c.post}</p>
 
               <div className="border-t border-gray-100 pt-3 space-y-2 text-xs text-gray-600">
                 <p><span className="font-medium text-gray-800">肝（蝶番）:</span> {c.hinge}</p>
                 <p><span className="font-medium text-gray-800">反転:</span> {c.reversal}</p>
                 <p><span className="font-medium text-gray-800">自己診断:</span> {c.self_check}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {replyResult && (
+        <div className="mt-6 space-y-4">
+          {replyResult.candidates.map((c, i) => (
+            <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                  {c.angle}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => copyPost(c.reply, i)}
+                  className="text-xs text-gray-500 hover:text-gray-800 transition-colors"
+                >
+                  {copiedIndex === i ? 'コピーしました' : '返信をコピー'}
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{c.reply}</p>
+
+              <div className="border-t border-gray-100 pt-3 text-xs text-gray-600">
+                <p><span className="font-medium text-gray-800">刺さる理由:</span> {c.note}</p>
               </div>
             </div>
           ))}
