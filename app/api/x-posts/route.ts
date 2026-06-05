@@ -5,11 +5,13 @@ import type { XPostResult } from '@/types'
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 export async function POST(req: NextRequest) {
-  const { news } = await req.json()
+  const { news, style_samples } = await req.json()
 
   if (!news || typeof news !== 'string' || news.trim().length === 0) {
     return NextResponse.json({ error: 'ニュース本文を入力してください' }, { status: 400 })
   }
+
+  const samples = typeof style_samples === 'string' ? style_samples.trim() : ''
 
   // responseMimeType でJSON出力を強制し、parse失敗を減らす（無償）。
   // temperatureを上げて蝶番の発想を発散させ、横並びの浅い候補を避ける。
@@ -18,12 +20,28 @@ export async function POST(req: NextRequest) {
     generationConfig: { responseMimeType: 'application/json', temperature: 0.95 },
   })
 
+  // 過去投稿が渡されたら、文体と視点の癖の見本として先頭に置く。
+  // これが「私の文章に近い」かつ「私らしい深さ」を生む唯一の手段。
+  const styleSection = samples
+    ? `# あなた（書き手）の過去投稿（最優先で再現する見本）
+以下はこのアカウントの実際の投稿です。次の2点を抽出し、全候補に反映せよ。
+1. 文体: 語彙・一人称・語尾・文の長さとリズム・改行や記号の使い方・絵文字の有無。一般的な解説文ではなく、この人が書いたと分かる文章にする。
+2. 視点の癖: この人が物事を見るときの典型的な切り口・価値観・こだわり。蝶番(hinge)の選び方自体を、この人ならどこを突くかに寄せる。
+※真似るのは「文体と視点」であり、過去投稿の話題やフレーズをそのまま流用しない。
+
+----- 過去投稿ここから -----
+${samples}
+----- 過去投稿ここまで -----
+
+`
+    : ''
+
   // 深さの本体はこのプロンプト。要約・感想ではなく「蝶番（hinge）」を特定し、
   // それが逆に振れたら結論がどう反転するかを示すことで、読者の次の予想を変える。
   const prompt = `あなたはニュースを深く読み解き、X（旧Twitter）の投稿候補を作る編集者です。
 浅い投稿は禁止です。ここでの「深さ」の定義はただ一つ、「読者が次に何が起きるかの予想を、読む前と後で変えること」です。
 
-# 思考の手順（必ずこの順で考える）
+${styleSection}# 思考の手順（必ずこの順で考える）
 1. このニュースの本質的な問い（core_question）を一つ特定する。誰もが見る「正面の話題」を一度言語化し、それを意図的に捨てて、皆が見落としている問いを選ぶ。
 2. このニュースの「蝶番（hinge）」を最低5つ書き出し、最も非自明なものから3つを選ぶ。蝶番とは、それが逆に振れると話全体の意味が反転するような一変数のこと。
    （例: 値上げ報道なら「同業他社が追随したか否か」。追随＝価格転嫁できる側に回った合図、非追随＝その一社の体力切れの兆候、と意味が正反対になる。）

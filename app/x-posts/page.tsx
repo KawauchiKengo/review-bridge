@@ -1,14 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { XPostResult } from '@/types'
+
+const STYLE_STORAGE_KEY = 'x-posts-style-samples'
 
 export default function XPostsPage() {
   const [news, setNews] = useState('')
+  const [styleSamples, setStyleSamples] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<XPostResult | null>(null)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+
+  // 過去投稿の見本はブラウザに保存し、毎回貼り直さずに済むようにする。
+  // localStorageはSSR時に無いためmount後に読み込む（定石パターン）。
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setStyleSamples(localStorage.getItem(STYLE_STORAGE_KEY) ?? '')
+  }, [])
+
+  const updateStyleSamples = (value: string) => {
+    setStyleSamples(value)
+    localStorage.setItem(STYLE_STORAGE_KEY, value)
+  }
 
   const handleGenerate = async () => {
     setLoading(true)
@@ -18,7 +33,7 @@ export default function XPostsPage() {
     const res = await fetch('/api/x-posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ news }),
+      body: JSON.stringify({ news, style_samples: styleSamples }),
     })
 
     if (!res.ok) {
@@ -59,6 +74,22 @@ export default function XPostsPage() {
             placeholder="深掘りしたいニュースの本文や要点を貼り付けてください"
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            あなたの過去のX投稿（文体の見本）
+          </label>
+          <textarea
+            value={styleSamples}
+            onChange={e => updateStyleSamples(e.target.value)}
+            rows={6}
+            placeholder="あなたらしい投稿を5〜10本、改行で区切って貼り付けてください。文体と視点の癖を学習し、あなたに近い文章で候補を生成します（ブラウザに保存され、次回も使えます）"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            未入力でも生成できますが、入れるほど「あなたらしさ」と切り口の深さが出ます。
+          </p>
         </div>
 
         {error && (
