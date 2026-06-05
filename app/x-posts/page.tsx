@@ -24,9 +24,15 @@ const DEFAULT_STYLE_SAMPLES = `できるビジネスパーソンは、適切な�
 ポテトサラダはサラダだと信じたい。
 しんどい時にコールドプレイがかかってきて泣きそうになった。`
 
+const PROFILE_STORAGE_KEY = 'x-posts-author-profile'
+
+// 本人のプロフィール（@kngkwuc）。蝶番選びの視座の源泉として使う。
+const DEFAULT_AUTHOR_PROFILE = `元証券マン、元高校野球監督、元エチオピア住民。小さな会社（tenaadam.co.jp）を経営。大学院の博士課程後期に在籍。横浜在住。趣味は釣りとボート。1982年生まれ。`
+
 export default function XPostsPage() {
   const [news, setNews] = useState('')
   const [styleSamples, setStyleSamples] = useState('')
+  const [authorProfile, setAuthorProfile] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<XPostResult | null>(null)
@@ -35,15 +41,22 @@ export default function XPostsPage() {
   // 過去投稿の見本はブラウザに保存し、毎回貼り直さずに済むようにする。
   // localStorageはSSR時に無いためmount後に読み込む（定石パターン）。
   useEffect(() => {
-    // 保存済みがあれば優先、無ければ本人の実投稿を既定の見本にする
-    const stored = localStorage.getItem(STYLE_STORAGE_KEY)
+    // 保存済みがあれば優先、無ければ本人の実データを既定にする
+    const storedSamples = localStorage.getItem(STYLE_STORAGE_KEY)
+    const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY)
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setStyleSamples(stored ?? DEFAULT_STYLE_SAMPLES)
+    setStyleSamples(storedSamples ?? DEFAULT_STYLE_SAMPLES)
+    setAuthorProfile(storedProfile ?? DEFAULT_AUTHOR_PROFILE)
   }, [])
 
   const updateStyleSamples = (value: string) => {
     setStyleSamples(value)
     localStorage.setItem(STYLE_STORAGE_KEY, value)
+  }
+
+  const updateAuthorProfile = (value: string) => {
+    setAuthorProfile(value)
+    localStorage.setItem(PROFILE_STORAGE_KEY, value)
   }
 
   const handleGenerate = async () => {
@@ -54,7 +67,7 @@ export default function XPostsPage() {
     const res = await fetch('/api/x-posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ news, style_samples: styleSamples }),
+      body: JSON.stringify({ news, style_samples: styleSamples, author_profile: authorProfile }),
     })
 
     if (!res.ok) {
@@ -93,6 +106,19 @@ export default function XPostsPage() {
             onChange={e => setNews(e.target.value)}
             rows={8}
             placeholder="深掘りしたいニュースの本文や要点を貼り付けてください"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            あなたの経歴・立場（切り口の視座）
+          </label>
+          <textarea
+            value={authorProfile}
+            onChange={e => updateAuthorProfile(e.target.value)}
+            rows={3}
+            placeholder="職歴・専門・経験など。他の人が持てない視座ほど、ニュースを斬る角度が深くなります（ブラウザに保存され、次回も使えます）"
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           />
         </div>
