@@ -29,7 +29,7 @@ const DEFAULT_STYLE_SAMPLES = `できるビジネスパーソンは、適切な�
 const PROFILE_STORAGE_KEY = 'x-posts-author-profile'
 
 // 本人のプロフィール（@kngkwuc）。蝶番選びの視座の源泉として使う。
-const DEFAULT_AUTHOR_PROFILE = `元証券マン、元高校野球監督、元エチオピア住民。小さな会社（tenaadam.co.jp）を経営。大学院の博士課程後期に在籍。横浜在住。趣味は釣りとボート。1982年生まれ。`
+const DEFAULT_AUTHOR_PROFILE = `元証券マン、元高校野球監督、元エチオピア住民。小さな会社（tenaadam.co.jp）を経営。大学院の博士課程後期に在籍。横浜在住。趣味は釣りとボートレース（競艇）。1982年生まれ。`
 
 export default function XPostsPage() {
   const [mode, setMode] = useState<Mode>('news')
