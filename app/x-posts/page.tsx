@@ -41,7 +41,7 @@ export default function XPostsPage() {
   const [error, setError] = useState('')
   const [result, setResult] = useState<XPostResult | null>(null)
   const [replyResult, setReplyResult] = useState<XReplyResult | null>(null)
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
   // 過去投稿の見本はブラウザに保存し、毎回貼り直さずに済むようにする。
   // localStorageはSSR時に無いためmount後に読み込む（定石パターン）。
@@ -103,10 +103,10 @@ export default function XPostsPage() {
 
   const inputEmpty = mode === 'news' ? news.trim().length === 0 : replyTarget.trim().length === 0
 
-  const copyPost = async (text: string, index: number) => {
+  const copyPost = async (text: string, key: string) => {
     await navigator.clipboard.writeText(text)
-    setCopiedIndex(index)
-    setTimeout(() => setCopiedIndex(null), 1500)
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 1500)
   }
 
   return (
@@ -224,10 +224,10 @@ export default function XPostsPage() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => copyPost(c.post, i)}
+                  onClick={() => copyPost(c.post, `post-${i}`)}
                   className="text-xs text-gray-500 hover:text-gray-800 transition-colors"
                 >
-                  {copiedIndex === i ? 'コピーしました' : '本文をコピー'}
+                  {copiedKey === `post-${i}` ? 'コピーしました' : '本文をコピー'}
                 </button>
               </div>
 
@@ -243,6 +243,34 @@ export default function XPostsPage() {
               </div>
             </div>
           ))}
+
+          {result.trend_replies?.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <p className="text-xs font-medium text-gray-500">
+                トレンド乗り返信ドラフト（伸びている投稿に返信／引用で被せる用）
+              </p>
+              {result.trend_replies.map((c, i) => (
+                <div key={i} className="bg-green-50 border border-green-200 rounded-xl p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded">
+                      {c.angle}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => copyPost(c.reply, `trend-${i}`)}
+                      className="text-xs text-gray-500 hover:text-gray-800 transition-colors"
+                    >
+                      {copiedKey === `trend-${i}` ? 'コピーしました' : '本文をコピー'}
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{c.reply}</p>
+                  <div className="border-t border-green-100 pt-3 text-xs text-gray-600">
+                    <p><span className="font-medium text-gray-800">被せ先の例:</span> {c.note}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -256,10 +284,10 @@ export default function XPostsPage() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => copyPost(c.reply, i)}
+                  onClick={() => copyPost(c.reply, `reply-${i}`)}
                   className="text-xs text-gray-500 hover:text-gray-800 transition-colors"
                 >
-                  {copiedIndex === i ? 'コピーしました' : '返信をコピー'}
+                  {copiedKey === `reply-${i}` ? 'コピーしました' : '返信をコピー'}
                 </button>
               </div>
 

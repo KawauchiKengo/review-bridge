@@ -32,15 +32,16 @@ export interface XPostCandidate {
   self_check: string   // 差し替えテスト・確率テストの自己診断
 }
 
-export interface XPostResult {
-  core_question: string        // このニュースの本質的な問い
-  candidates: XPostCandidate[] // 異なる蝶番を軸にした投稿候補
-}
-
 export interface XReplyCandidate {
   angle: string   // どの引き出し（視座）から橋を架けたか
   reply: string   // 返信本文（140字以内）。賛同で終わらず価値を足す
   note: string    // なぜこの返信が相手のフォロワーに刺さるかの一言
+}
+
+export interface XPostResult {
+  core_question: string          // このニュースの本質的な問い
+  candidates: XPostCandidate[]   // 異なる蝶番を軸にした投稿候補
+  trend_replies: XReplyCandidate[] // 伸びている投稿に被せて使う返信/引用ドラフト
 }
 
 export interface XReplyResult {
