@@ -147,7 +147,7 @@ export default function XPostsPage() {
               value={news}
               onChange={e => setNews(e.target.value)}
               rows={8}
-              placeholder="深掘りしたいニュースの本文や要点を貼り付けてください"
+              placeholder="ニュースの本文や要点を貼り付けてください（分野は問いません。経済・スポーツ・娯楽・社会、何でも。本質を抽象化して経営・人・生き方へ転用します）"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
           </div>
@@ -220,7 +220,7 @@ export default function XPostsPage() {
             <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                  {c.angle}
+                  {c.transfer}
                 </span>
                 <button
                   type="button"
@@ -237,8 +237,9 @@ export default function XPostsPage() {
               <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed border-t border-gray-100 pt-3">{c.post}</p>
 
               <div className="border-t border-gray-100 pt-3 space-y-2 text-xs text-gray-600">
-                <p><span className="font-medium text-gray-800">肝（蝶番）:</span> {c.hinge}</p>
-                <p><span className="font-medium text-gray-800">反転:</span> {c.reversal}</p>
+                <p><span className="font-medium text-gray-800">本質（抽象）:</span> {c.essence}</p>
+                <p><span className="font-medium text-gray-800">転用先:</span> {c.transfer}</p>
+                <p><span className="font-medium text-gray-800">考え:</span> {c.thought}</p>
                 <p><span className="font-medium text-gray-800">自己診断:</span> {c.self_check}</p>
               </div>
             </div>

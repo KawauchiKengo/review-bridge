@@ -24,12 +24,12 @@ export interface Reviewer {
 }
 
 export interface XPostCandidate {
-  hinge: string        // 肝＝結論を左右する蝶番となる一変数
-  reversal: string     // その変数が逆に振れたら結論がどう反転するか
-  angle: string        // 視点・視座のラベル（例: 当事者の損得 / 業界構造 / 長期）
-  hook: string         // 1行目だけで読む手を止める単独成立のフック
-  post: string         // X投稿本文（140字以内、hookで始まる）
-  self_check: string   // 差し替えテスト・確率テストの自己診断
+  essence: string      // 本質。枝葉を捨て一段抽象化した構造・原理（分野固有語を使わない一文）
+  transfer: string     // その原理が効く別の場（経営/組織/人/生き方/別ジャンル）
+  thought: string      // そこから立ち上げた「考え」＝主張・問い・予測（外れうる賭け）。投稿の核
+  hook: string         // 1行目だけで読む手を止める単独成立のフック（結論ファースト）
+  post: string         // X投稿本文（140字以内、hookで始まる。主役はthought、ニュースは入口）
+  self_check: string   // 表面なぞり/感想になっていないか等の自己診断
 }
 
 export interface XReplyCandidate {
