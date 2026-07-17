@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/lib/useAuth'
 import { supabase } from '@/lib/supabase'
 import { Conversation, Message, Persona } from '@/types'
+import PersonaFeedbackButton from '@/app/components/PersonaFeedbackButton'
 
 export default function ChatPage() {
   const params = useParams<{ id: string }>()
@@ -96,6 +97,9 @@ export default function ChatPage() {
                 <p className="text-xs font-medium text-gray-500 mb-1">{personaNameById[m.persona_id ?? ''] ?? 'AI'}</p>
               )}
               <p className="whitespace-pre-wrap">{m.content}</p>
+              {m.sender_type === 'persona' && m.persona_id && (
+                <PersonaFeedbackButton personaId={m.persona_id} messageId={m.id} />
+              )}
             </div>
           </div>
         ))}

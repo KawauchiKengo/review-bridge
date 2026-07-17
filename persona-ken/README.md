@@ -6,7 +6,7 @@ Next.js (App Router) + Supabase (PostgreSQL / Auth) + Google Gemini API。
 ## セットアップ
 
 1. [Supabase](https://supabase.com) でプロジェクトを作成する
-2. Supabase の SQL Editor で `supabase/migrations/001_init.sql` の内容を実行する
+2. Supabase の SQL Editor で `supabase/migrations/001_init.sql` と `supabase/migrations/002_persona_feedback.sql` の内容を実行する
 3. `.env.example` を `.env.local` にコピーし、値を埋める
 
 ```bash
@@ -37,6 +37,7 @@ npm run dev
 4. ペルソナ詳細ページから「壁打ちを始める」で1対1チャット
 5. ダッシュボードの「複数人で議論する」で、複数ペルソナ（他人が作ったペルソナも含む）を選んで議論させる
 6. 「会話ログ」から過去のやり取りを見返せる
+7. ペルソナの返答に「これは違う」と感じたら、フィードバックを送信できる。ペルソナ作成者が内容を確認し、「反映する」を押すと人格設定が更新される（`/personas/[id]/feedback`）
 
 ## コマンド
 

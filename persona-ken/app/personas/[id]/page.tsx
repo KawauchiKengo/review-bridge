@@ -87,12 +87,20 @@ export default function PersonaDetailPage() {
           <h1 className="text-2xl font-bold text-gray-900">{persona.name}</h1>
           <p className="text-sm text-gray-500 mt-1">{isOwner ? '編集できます' : '閲覧のみ（作成者のみ編集可）'}</p>
         </div>
-        <button
-          onClick={() => router.push(`/chat/new?persona=${persona.id}`)}
-          className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          壁打ちを始める
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => router.push(`/personas/${persona.id}/feedback`)}
+            className="border border-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            フィードバック
+          </button>
+          <button
+            onClick={() => router.push(`/chat/new?persona=${persona.id}`)}
+            className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            壁打ちを始める
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleSave} className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">

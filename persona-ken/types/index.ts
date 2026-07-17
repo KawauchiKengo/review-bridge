@@ -58,3 +58,19 @@ export interface Message {
   created_at: string
   persona?: Persona
 }
+
+export type PersonaFeedbackStatus = 'pending' | 'applied' | 'dismissed'
+
+export interface PersonaFeedback {
+  id: string
+  persona_id: string
+  message_id: string | null
+  created_by: string
+  feedback_text: string
+  original_system_prompt: string
+  proposed_system_prompt: string
+  status: PersonaFeedbackStatus
+  created_at: string
+  resolved_at: string | null
+  created_by_profile?: Profile
+}
