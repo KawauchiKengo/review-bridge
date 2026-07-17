@@ -35,6 +35,7 @@ app/
   conversations/page.tsx                # 会話ログ一覧
   api/
     conversations/[id]/reply/route.ts   # POST: 指定ペルソナとしてGemini応答を生成・保存
+    personas/[id]/feedback/route.ts     # POST: フィードバックを踏まえた人格設定の改訂案をGeminiで生成・保存
 lib/
   supabase.ts                           # Supabaseクライアント（ブラウザ用 / サーバー用）
   gemini.ts                             # Gemini APIクライアント
@@ -43,7 +44,9 @@ lib/
 types/
   index.ts                              # 共通型定義
 supabase/
-  migrations/001_init.sql               # DBスキーマ（組織・チーム・ペルソナ・会話ログ・RLS）
+  migrations/
+    001_init.sql                        # DBスキーマ（組織・チーム・ペルソナ・会話ログ・RLS）
+    002_persona_feedback.sql            # persona_feedback（フィードバックで育てる機能）
 ```
 
 ## データモデルの要点
@@ -51,6 +54,7 @@ supabase/
 - **公開範囲**: ペルソナは `private`（自分のみ）/ `team`（チーム内）/ `org`（組織全体）を持ち、RLSで閲覧範囲を制御する。編集・削除は作成者のみ。
 - **会話ログ**: `conversations` / `conversation_personas` / `messages` は作成者本人にのみ閲覧・操作権限がある（RLSで非公開）。他人が作ったペルソナと議論しても、そのログは自分だけのもの。
 - **組織参加**: `create_organization` / `join_organization` という SECURITY DEFINER 関数経由でのみ `profiles.org_id` / `role` を変更できる（直接更新は `display_name` のみ許可）。
+- **フィードバックで育てる**: ペルソナの発言に「これは違う」とフィードバックを送ると、Geminiが現在の人格設定＋フィードバックをもとに改訂案（`persona_feedback.proposed_system_prompt`）を生成する。**自動反映はしない**。ペルソナ所有者が `/personas/[id]/feedback` で内容を確認し、「反映する」を押して初めて `personas.system_prompt` が更新される。フィードバックは、そのペルソナを閲覧できる人なら誰でも送信できるが、反映・却下は所有者のみ（RLSで制御）。
 
 ## 環境変数
 
