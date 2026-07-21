@@ -26,7 +26,7 @@ export default function Header() {
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link href="/" className="font-bold text-xl text-blue-700 tracking-tight">
-          2号くん
+          川内2号くん
         </Link>
         {loggedIn && (
           <nav className="flex items-center gap-4 text-sm">

@@ -34,7 +34,7 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-sm mx-auto mt-12">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">2号くん</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">川内2号くん</h1>
       <p className="text-sm text-gray-500 mb-6">
         {mode === 'signin' ? 'ログイン' : '新規登録'}
       </p>

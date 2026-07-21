@@ -1,4 +1,4 @@
-# persona-ken（2号くん）
+# persona-ken（川内2号くん）
 
 複数のAI人格（ペルソナ）と壁打ち・議論シミュレーションができる社内向けツール。
 Next.js (App Router) + Supabase (PostgreSQL / Auth) + Google Gemini API。

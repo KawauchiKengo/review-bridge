@@ -6,7 +6,7 @@ import Header from './components/Header'
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: '2号くん',
+  title: '川内2号くん',
   description: 'AI人格との壁打ち・議論シミュレーション',
 }
 

@@ -2,7 +2,7 @@
 
 ## プロジェクト概要
 
-persona-ken（2号くん） — 複数のAI人格（ペルソナ）と壁打ち・議論シミュレーションができる社内向けツール。
+persona-ken（川内2号くん） — 複数のAI人格（ペルソナ）と壁打ち・議論シミュレーションができる社内向けツール。
 Next.js 14 (App Router) + Supabase (PostgreSQL / Auth) + Google Gemini API。
 
 review-bridge リポジトリ内で開発を始めたが、review-bridge（学術査読マッチング）とはドメインが異なる別プロジェクト。
