@@ -14,6 +14,7 @@ export default function PersonaDetailPage() {
   const [teams, setTeams] = useState<Team[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
@@ -67,6 +68,8 @@ export default function PersonaDetailPage() {
       return
     }
     setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   const handleDelete = async () => {
@@ -215,7 +218,7 @@ export default function PersonaDetailPage() {
             disabled={saving}
             className="flex-1 bg-blue-600 text-white text-sm py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            {saving ? '保存中...' : '保存する'}
+            {saving ? '保存中...' : saved ? '保存しました' : '保存する'}
           </button>
         </div>
       </form>
