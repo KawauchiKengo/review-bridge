@@ -1,4 +1,4 @@
--- 001と002をまとめた、何度実行しても安全な統合SQL。
+-- 001〜003をまとめた、何度実行しても安全な統合SQL。
 -- 途中まで実行されていた状態からでも、これを1回流せば正しい状態に揃う。
 
 -- 組織
@@ -130,6 +130,15 @@ begin
 end;
 $$ language plpgsql security definer;
 
+-- ペルソナの個人単位共有（visibilityとは独立に、特定のユーザーにだけ閲覧・壁打ち権限を渡す）
+create table if not exists persona_shares (
+  persona_id uuid not null references personas(id) on delete cascade,
+  user_id uuid not null references profiles(id) on delete cascade,
+  shared_by uuid not null references profiles(id) on delete cascade,
+  created_at timestamptz default now(),
+  primary key (persona_id, user_id)
+);
+
 -- org_id / role は上記の関数経由でのみ変更させる（本人の直接更新は表示名のみ）
 revoke update on profiles from authenticated;
 grant update (display_name) on profiles to authenticated;
@@ -143,6 +152,7 @@ alter table conversations enable row level security;
 alter table conversation_personas enable row level security;
 alter table messages enable row level security;
 alter table persona_feedback enable row level security;
+alter table persona_shares enable row level security;
 
 drop policy if exists "select own organization" on organizations;
 create policy "select own organization" on organizations
@@ -189,6 +199,7 @@ create policy "select visible personas" on personas
     owner_id = auth.uid()
     or (visibility = 'org' and org_id in (select org_id from profiles where id = auth.uid()))
     or (visibility = 'team' and team_id in (select team_id from team_members where user_id = auth.uid()))
+    or id in (select persona_id from persona_shares where user_id = auth.uid())
   );
 drop policy if exists "insert own personas" on personas;
 create policy "insert own personas" on personas
@@ -230,16 +241,35 @@ drop policy if exists "insert feedback on visible personas" on persona_feedback;
 create policy "insert feedback on visible personas" on persona_feedback
   for insert with check (
     created_by = auth.uid()
-    and persona_id in (
-      select id from personas where
-        owner_id = auth.uid()
-        or (visibility = 'org' and org_id in (select org_id from profiles where id = auth.uid()))
-        or (visibility = 'team' and team_id in (select team_id from team_members where user_id = auth.uid()))
-    )
+    and persona_id in (select id from personas where owner_id = auth.uid())
   );
 
 drop policy if exists "owner resolves feedback" on persona_feedback;
 create policy "owner resolves feedback" on persona_feedback
   for update using (
+    persona_id in (select id from personas where owner_id = auth.uid())
+  );
+
+drop policy if exists "select own shares" on persona_shares;
+create policy "select own shares" on persona_shares
+  for select using (
+    user_id = auth.uid()
+    or persona_id in (select id from personas where owner_id = auth.uid())
+  );
+
+drop policy if exists "owner shares persona" on persona_shares;
+create policy "owner shares persona" on persona_shares
+  for insert with check (
+    shared_by = auth.uid()
+    and persona_id in (select id from personas where owner_id = auth.uid())
+    and user_id in (
+      select id from profiles
+      where org_id = (select org_id from personas where id = persona_id)
+    )
+  );
+
+drop policy if exists "owner revokes share" on persona_shares;
+create policy "owner revokes share" on persona_shares
+  for delete using (
     persona_id in (select id from personas where owner_id = auth.uid())
   );
