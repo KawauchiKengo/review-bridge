@@ -113,8 +113,9 @@ export default function PersonaDetailPage() {
         </div>
       </div>
 
+      {isOwner && (
       <form onSubmit={handleSave} className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
-        <fieldset disabled={!isOwner} className="space-y-5">
+        <fieldset className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">名前</label>
             <input
@@ -201,25 +202,24 @@ export default function PersonaDetailPage() {
 
         {error && <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg">{error}</div>}
 
-        {isOwner && (
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="border border-red-300 text-red-600 text-sm px-4 py-2.5 rounded-lg hover:bg-red-50 transition-colors"
-            >
-              削除
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 bg-blue-600 text-white text-sm py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {saving ? '保存中...' : '保存する'}
-            </button>
-          </div>
-        )}
+        <div className="flex gap-3 pt-2">
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="border border-red-300 text-red-600 text-sm px-4 py-2.5 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            削除
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 bg-blue-600 text-white text-sm py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {saving ? '保存中...' : '保存する'}
+          </button>
+        </div>
       </form>
+      )}
     </div>
   )
 }
