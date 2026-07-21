@@ -27,6 +27,7 @@ app/
   personas/
     new/page.tsx                        # ペルソナ作成
     [id]/page.tsx                       # ペルソナ詳細・編集
+    [id]/share/page.tsx                 # 個人単位の共有設定（所有者のみ）
   chat/
     new/page.tsx                        # 1対1会話の作成（?persona=IDで起動）
     [id]/page.tsx                       # 1対1チャット画面
@@ -47,14 +48,17 @@ supabase/
   migrations/
     001_init.sql                        # DBスキーマ（組織・チーム・ペルソナ・会話ログ・RLS）
     002_persona_feedback.sql            # persona_feedback（フィードバックで育てる機能）
+    003_persona_shares.sql              # persona_shares（個人単位の共有）
+    000_combined_idempotent.sql         # 001〜003をまとめた、何度実行しても安全な統合SQL
 ```
 
 ## データモデルの要点
 
 - **公開範囲**: ペルソナは `private`（自分のみ）/ `team`（チーム内）/ `org`（組織全体）を持ち、RLSで閲覧範囲を制御する。編集・削除は作成者のみ。
+- **個人単位の共有**: 上記の `visibility` とは別に、`persona_shares` テーブルで特定の組織メンバーにだけ閲覧・壁打ち権限を渡せる（`/personas/[id]/share`、所有者のみ操作可）。招待された側が管理者権限を持つことはない。共有は「閲覧＋壁打ち」のみで、編集・削除・フィードバック送信はできない。
 - **会話ログ**: `conversations` / `conversation_personas` / `messages` は作成者本人にのみ閲覧・操作権限がある（RLSで非公開）。他人が作ったペルソナと議論しても、そのログは自分だけのもの。
 - **組織参加**: `create_organization` / `join_organization` という SECURITY DEFINER 関数経由でのみ `profiles.org_id` / `role` を変更できる（直接更新は `display_name` のみ許可）。
-- **フィードバックで育てる**: ペルソナの発言に「これは違う」とフィードバックを送ると、Geminiが現在の人格設定＋フィードバックをもとに改訂案（`persona_feedback.proposed_system_prompt`）を生成する。**自動反映はしない**。ペルソナ所有者が `/personas/[id]/feedback` で内容を確認し、「反映する」を押して初めて `personas.system_prompt` が更新される。フィードバックは、そのペルソナを閲覧できる人なら誰でも送信できるが、反映・却下は所有者のみ（RLSで制御）。
+- **フィードバックで育てる**: ペルソナの発言に「これは違う」とフィードバックを送ると、Geminiが現在の人格設定＋フィードバックをもとに改訂案（`persona_feedback.proposed_system_prompt`）を生成する。**自動反映はしない**。ペルソナ所有者が `/personas/[id]/feedback` で内容を確認し、「反映する」を押して初めて `personas.system_prompt` が更新される。フィードバックの送信・反映・却下はすべてペルソナ所有者のみ（RLSで制御）。共有された側（他人のペルソナを閲覧・壁打ちできる人）はフィードバックを送信できない。
 
 ## 環境変数
 

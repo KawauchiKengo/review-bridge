@@ -62,14 +62,13 @@ export default function PersonaFeedbackPage() {
   }
 
   if (loading || !profile || !persona) return <p className="text-gray-500 text-sm">読み込み中...</p>
+  if (!isOwner) return <p className="text-gray-500 text-sm">このページはペルソナ所有者のみ利用できます</p>
 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{persona.name} へのフィードバック</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {isOwner ? '内容を確認し、反映するか判断してください' : 'あなたが送ったフィードバックの一覧です'}
-        </p>
+        <p className="text-sm text-gray-500 mt-1">内容を確認し、反映するか判断してください</p>
       </div>
 
       {feedbackList.length === 0 && <p className="text-sm text-gray-500">まだフィードバックはありません</p>}

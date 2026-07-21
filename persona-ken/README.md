@@ -6,7 +6,7 @@ Next.js (App Router) + Supabase (PostgreSQL / Auth) + Google Gemini API。
 ## セットアップ
 
 1. [Supabase](https://supabase.com) でプロジェクトを作成する
-2. Supabase の SQL Editor で `supabase/migrations/001_init.sql` と `supabase/migrations/002_persona_feedback.sql` の内容を実行する
+2. Supabase の SQL Editor で `supabase/migrations/000_combined_idempotent.sql` の内容を実行する（`001_init.sql` 〜 `003_persona_shares.sql` をまとめた、何度実行しても安全なスクリプト）
 3. `.env.example` を `.env.local` にコピーし、値を埋める
 
 ```bash
@@ -37,7 +37,8 @@ npm run dev
 4. ペルソナ詳細ページから「壁打ちを始める」で1対1チャット
 5. ダッシュボードの「複数人で議論する」で、複数ペルソナ（他人が作ったペルソナも含む）を選んで議論させる
 6. 「会話ログ」から過去のやり取りを見返せる
-7. ペルソナの返答に「これは違う」と感じたら、フィードバックを送信できる。ペルソナ作成者が内容を確認し、「反映する」を押すと人格設定が更新される（`/personas/[id]/feedback`）
+7. 特定の同僚にだけ個別に共有したい場合は、ペルソナ詳細ページの「共有する」から対象を選ぶ（`/personas/[id]/share`、所有者のみ操作可）。共有された相手は閲覧・壁打ちができるが、編集・削除・フィードバック送信・管理者権限はない
+8. ペルソナ所有者は、自分のペルソナの返答に「これは違う」と感じたら、フィードバックを送信できる。内容を確認し「反映する」を押すと人格設定が更新される（`/personas/[id]/feedback`）。フィードバックの送信・反映・却下はペルソナ所有者のみ
 
 ## コマンド
 

@@ -59,6 +59,13 @@ export interface Message {
   persona?: Persona
 }
 
+export interface PersonaShare {
+  persona_id: string
+  user_id: string
+  shared_by: string
+  created_at: string
+}
+
 export type PersonaFeedbackStatus = 'pending' | 'applied' | 'dismissed'
 
 export interface PersonaFeedback {

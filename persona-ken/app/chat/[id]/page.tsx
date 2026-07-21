@@ -36,6 +36,7 @@ export default function ChatPage() {
   }, [messages])
 
   const personaNameById = Object.fromEntries(personas.map((p) => [p.id, p.name]))
+  const personaOwnerById = Object.fromEntries(personas.map((p) => [p.id, p.owner_id]))
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,7 +98,7 @@ export default function ChatPage() {
                 <p className="text-xs font-medium text-gray-500 mb-1">{personaNameById[m.persona_id ?? ''] ?? 'AI'}</p>
               )}
               <p className="whitespace-pre-wrap">{m.content}</p>
-              {m.sender_type === 'persona' && m.persona_id && (
+              {m.sender_type === 'persona' && m.persona_id && personaOwnerById[m.persona_id] === profile.id && (
                 <PersonaFeedbackButton personaId={m.persona_id} messageId={m.id} />
               )}
             </div>
