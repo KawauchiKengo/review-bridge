@@ -191,6 +191,16 @@ as $$
   select org_id from profiles where id = auth.uid()
 $$;
 
+-- personasとpersona_sharesが互いのポリシーを参照し合うと無限再帰になるため、同様の対処
+create or replace function get_my_persona_ids()
+returns setof uuid
+language sql
+security definer
+stable
+as $$
+  select id from personas where owner_id = auth.uid()
+$$;
+
 -- org_id / role は上記の関数経由でのみ変更させる（本人の直接更新は表示名のみ）
 revoke update on profiles from authenticated;
 grant update (display_name) on profiles to authenticated;
@@ -307,7 +317,7 @@ drop policy if exists "select own shares" on persona_shares;
 create policy "select own shares" on persona_shares
   for select using (
     user_id = auth.uid()
-    or persona_id in (select id from personas where owner_id = auth.uid())
+    or persona_id in (select get_my_persona_ids())
   );
 
 drop policy if exists "owner shares persona" on persona_shares;
