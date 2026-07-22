@@ -25,7 +25,7 @@ begin
   insert into profiles (id, display_name) values (new.id, new.email);
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
@@ -113,7 +113,7 @@ begin
   update profiles set org_id = new_org.id, role = 'admin' where id = auth.uid();
   return new_org;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 -- ペルソナの個人単位共有（visibilityとは独立に、特定のユーザーにだけ閲覧・壁打ち権限を渡す）
 create table if not exists persona_shares (
@@ -155,7 +155,7 @@ begin
 
   return true;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 -- 管理者が申請を承認する（承認された人のprofilesを更新する）
 create or replace function approve_join_request(request_id uuid)
@@ -178,7 +178,30 @@ begin
   update join_requests set status = 'approved', resolved_at = now() where id = request_id;
   return true;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
+
+-- profilesのRLSポリシーがprofiles自身をサブクエリで参照すると無限再帰になるため、
+-- SECURITY DEFINER関数（内部でRLSをバイパスする）経由にする
+create or replace function get_my_org_id()
+returns uuid
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select org_id from profiles where id = auth.uid()
+$$;
+
+-- personasとpersona_sharesが互いのポリシーを参照し合うと無限再帰になるため、同様の対処
+create or replace function get_my_persona_ids()
+returns setof uuid
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select id from personas where owner_id = auth.uid()
+$$;
 
 -- org_id / role は上記の関数経由でのみ変更させる（本人の直接更新は表示名のみ）
 revoke update on profiles from authenticated;
@@ -204,7 +227,7 @@ drop policy if exists "select same org profiles" on profiles;
 create policy "select same org profiles" on profiles
   for select using (
     id = auth.uid()
-    or org_id in (select org_id from profiles where id = auth.uid())
+    or org_id = get_my_org_id()
   );
 drop policy if exists "update own profile" on profiles;
 create policy "update own profile" on profiles
@@ -296,7 +319,7 @@ drop policy if exists "select own shares" on persona_shares;
 create policy "select own shares" on persona_shares
   for select using (
     user_id = auth.uid()
-    or persona_id in (select id from personas where owner_id = auth.uid())
+    or persona_id in (select get_my_persona_ids())
   );
 
 drop policy if exists "owner shares persona" on persona_shares;
