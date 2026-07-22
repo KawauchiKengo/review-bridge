@@ -2,6 +2,27 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { getGeminiModel } from '@/lib/gemini'
 import { Persona, Message } from '@/types'
 
+// Geminiが一時的に混雑（503）している場合は少し待って自動リトライする
+async function generateContentWithRetry(
+  model: ReturnType<typeof getGeminiModel>,
+  prompt: string,
+  maxAttempts = 3
+) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await model.generateContent(prompt)
+    } catch (error) {
+      const status = (error as { status?: number })?.status
+      if (status === 503 && attempt < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, attempt * 1000))
+        continue
+      }
+      throw error
+    }
+  }
+  throw new Error('Geminiへのリクエストに失敗しました')
+}
+
 // 指定したペルソナとして、これまでの会話を踏まえた次の発言をGeminiに生成させ、messagesに保存する
 export async function generatePersonaReply(
   supabase: SupabaseClient,
@@ -37,7 +58,7 @@ ${transcript || '（まだ発言はありません）'}
 上記を踏まえて、${persona.name}として次の発言を書いてください。発言内容のみを出力し、名前や接頭辞は付けないでください。`
 
   const model = getGeminiModel()
-  const result = await model.generateContent(prompt)
+  const result = await generateContentWithRetry(model, prompt)
   const text = result.response.text().trim()
 
   const { data: inserted, error } = await supabase
