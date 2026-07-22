@@ -38,7 +38,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const message = await generatePersonaReply(supabase, id, targetPersona, personaNameById)
     return NextResponse.json({ message })
-  } catch {
+  } catch (error) {
+    console.error('generatePersonaReply failed:', error)
     return NextResponse.json({ error: 'AI応答の生成に失敗しました' }, { status: 500 })
   }
 }
