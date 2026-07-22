@@ -180,6 +180,17 @@ begin
 end;
 $$ language plpgsql security definer;
 
+-- profilesのRLSポリシーがprofiles自身をサブクエリで参照すると無限再帰になるため、
+-- SECURITY DEFINER関数（内部でRLSをバイパスする）経由にする
+create or replace function get_my_org_id()
+returns uuid
+language sql
+security definer
+stable
+as $$
+  select org_id from profiles where id = auth.uid()
+$$;
+
 -- org_id / role は上記の関数経由でのみ変更させる（本人の直接更新は表示名のみ）
 revoke update on profiles from authenticated;
 grant update (display_name) on profiles to authenticated;
@@ -204,7 +215,7 @@ drop policy if exists "select same org profiles" on profiles;
 create policy "select same org profiles" on profiles
   for select using (
     id = auth.uid()
-    or org_id in (select org_id from profiles where id = auth.uid())
+    or org_id = get_my_org_id()
   );
 drop policy if exists "update own profile" on profiles;
 create policy "update own profile" on profiles
