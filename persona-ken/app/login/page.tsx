@@ -23,7 +23,7 @@ export default function LoginPage() {
         : await supabase.auth.signUp({ email, password })
 
     if (authError) {
-      setError(authError.message)
+      setError(authError.message || '処理に失敗しました。時間をおいて再度お試しください。')
       setLoading(false)
       return
     }
