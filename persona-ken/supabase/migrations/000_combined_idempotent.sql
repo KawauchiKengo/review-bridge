@@ -25,7 +25,7 @@ begin
   insert into profiles (id, display_name) values (new.id, new.email);
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
@@ -113,7 +113,7 @@ begin
   update profiles set org_id = new_org.id, role = 'admin' where id = auth.uid();
   return new_org;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 -- ペルソナの個人単位共有（visibilityとは独立に、特定のユーザーにだけ閲覧・壁打ち権限を渡す）
 create table if not exists persona_shares (
@@ -155,7 +155,7 @@ begin
 
   return true;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 -- 管理者が申請を承認する（承認された人のprofilesを更新する）
 create or replace function approve_join_request(request_id uuid)
@@ -178,7 +178,7 @@ begin
   update join_requests set status = 'approved', resolved_at = now() where id = request_id;
   return true;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 -- profilesのRLSポリシーがprofiles自身をサブクエリで参照すると無限再帰になるため、
 -- SECURITY DEFINER関数（内部でRLSをバイパスする）経由にする
@@ -187,6 +187,7 @@ returns uuid
 language sql
 security definer
 stable
+set search_path = public
 as $$
   select org_id from profiles where id = auth.uid()
 $$;
@@ -197,6 +198,7 @@ returns setof uuid
 language sql
 security definer
 stable
+set search_path = public
 as $$
   select id from personas where owner_id = auth.uid()
 $$;
