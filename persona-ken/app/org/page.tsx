@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/useAuth'
 import { supabase } from '@/lib/supabase'
-import { Team, Profile, Organization } from '@/types'
+import { Team, Profile, Organization, JoinRequest } from '@/types'
 
 export default function OrgPage() {
   const { profile, loading } = useAuth()
@@ -11,8 +11,10 @@ export default function OrgPage() {
   const [teams, setTeams] = useState<Team[]>([])
   const [members, setMembers] = useState<Profile[]>([])
   const [teamMembers, setTeamMembers] = useState<Record<string, string[]>>({})
+  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([])
   const [newTeamName, setNewTeamName] = useState('')
   const [error, setError] = useState('')
+  const [resolvingId, setResolvingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (profile) load()
@@ -21,21 +23,40 @@ export default function OrgPage() {
 
   async function load() {
     if (!profile?.org_id) return
-    const [{ data: orgData }, { data: teamsData }, { data: membersData }, { data: tmData }] = await Promise.all([
+    const [{ data: orgData }, { data: teamsData }, { data: membersData }, { data: tmData }, { data: requestsData }] = await Promise.all([
       supabase.from('organizations').select('*').eq('id', profile.org_id).single(),
       supabase.from('teams').select('*').eq('org_id', profile.org_id).order('created_at'),
       supabase.from('profiles').select('*').eq('org_id', profile.org_id).order('display_name'),
       supabase.from('team_members').select('team_id, user_id'),
+      supabase.from('join_requests').select('*').eq('org_id', profile.org_id).eq('status', 'pending').order('created_at'),
     ])
     setOrg(orgData)
     setTeams(teamsData ?? [])
     setMembers(membersData ?? [])
+    setJoinRequests(requestsData ?? [])
 
     const grouped: Record<string, string[]> = {}
     for (const row of tmData ?? []) {
       grouped[row.team_id] = [...(grouped[row.team_id] ?? []), row.user_id]
     }
     setTeamMembers(grouped)
+  }
+
+  const handleApprove = async (requestId: string) => {
+    setResolvingId(requestId)
+    await supabase.rpc('approve_join_request', { request_id: requestId })
+    setResolvingId(null)
+    load()
+  }
+
+  const handleReject = async (requestId: string) => {
+    setResolvingId(requestId)
+    await supabase
+      .from('join_requests')
+      .update({ status: 'rejected', resolved_at: new Date().toISOString() })
+      .eq('id', requestId)
+    setResolvingId(null)
+    load()
   }
 
   const handleCreateTeam = async (e: React.FormEvent) => {
@@ -76,8 +97,38 @@ export default function OrgPage() {
       {isAdmin && org && (
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <h2 className="font-semibold text-gray-900 mb-2">招待コード</h2>
-          <p className="text-sm text-gray-500 mb-2">このコードを伝えると、メンバーが組織に参加できます。</p>
+          <p className="text-sm text-gray-500 mb-2">このコードを伝えると、メンバーが組織への参加を申請できます。参加には管理者の承認が必要です。</p>
           <code className="bg-gray-100 px-3 py-2 rounded-lg text-sm font-mono">{org.invite_code}</code>
+        </div>
+      )}
+
+      {isAdmin && (
+        <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
+          <h2 className="font-semibold text-gray-900">参加申請</h2>
+
+          {joinRequests.length === 0 && <p className="text-sm text-gray-500">承認待ちの申請はありません</p>}
+
+          {joinRequests.map((req) => (
+            <div key={req.id} className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-2.5">
+              <span className="text-sm text-gray-900">{req.requester_display_name || req.user_id}</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleReject(req.id)}
+                  disabled={resolvingId === req.id}
+                  className="border border-gray-300 text-gray-700 text-xs px-3 py-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  却下
+                </button>
+                <button
+                  onClick={() => handleApprove(req.id)}
+                  disabled={resolvingId === req.id}
+                  className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  承認
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

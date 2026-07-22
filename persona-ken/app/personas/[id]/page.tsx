@@ -14,6 +14,7 @@ export default function PersonaDetailPage() {
   const [teams, setTeams] = useState<Team[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
@@ -67,6 +68,8 @@ export default function PersonaDetailPage() {
       return
     }
     setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   const handleDelete = async () => {
@@ -88,12 +91,22 @@ export default function PersonaDetailPage() {
           <p className="text-sm text-gray-500 mt-1">{isOwner ? '編集できます' : '閲覧のみ（作成者のみ編集可）'}</p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={() => router.push(`/personas/${persona.id}/feedback`)}
-            className="border border-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            フィードバック
-          </button>
+          {isOwner && (
+            <button
+              onClick={() => router.push(`/personas/${persona.id}/share`)}
+              className="border border-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              共有する
+            </button>
+          )}
+          {isOwner && (
+            <button
+              onClick={() => router.push(`/personas/${persona.id}/feedback`)}
+              className="border border-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              フィードバック
+            </button>
+          )}
           <button
             onClick={() => router.push(`/chat/new?persona=${persona.id}`)}
             className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -103,8 +116,9 @@ export default function PersonaDetailPage() {
         </div>
       </div>
 
+      {isOwner && (
       <form onSubmit={handleSave} className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
-        <fieldset disabled={!isOwner} className="space-y-5">
+        <fieldset className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">名前</label>
             <input
@@ -191,25 +205,24 @@ export default function PersonaDetailPage() {
 
         {error && <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg">{error}</div>}
 
-        {isOwner && (
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="border border-red-300 text-red-600 text-sm px-4 py-2.5 rounded-lg hover:bg-red-50 transition-colors"
-            >
-              削除
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 bg-blue-600 text-white text-sm py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {saving ? '保存中...' : '保存する'}
-            </button>
-          </div>
-        )}
+        <div className="flex gap-3 pt-2">
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="border border-red-300 text-red-600 text-sm px-4 py-2.5 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            削除
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 bg-blue-600 text-white text-sm py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {saving ? '保存中...' : saved ? '保存しました' : '保存する'}
+          </button>
+        </div>
       </form>
+      )}
     </div>
   )
 }

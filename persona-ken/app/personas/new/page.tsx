@@ -90,7 +90,7 @@ export default function NewPersonaPage() {
             value={form.name}
             onChange={set('name')}
             required
-            placeholder="例: 2号くん"
+            placeholder="例: 川内2号くん"
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
