@@ -6,7 +6,7 @@ Next.js (App Router) + Supabase (PostgreSQL / Auth) + Google Gemini API。
 ## セットアップ
 
 1. [Supabase](https://supabase.com) でプロジェクトを作成する
-2. Supabase の SQL Editor で `supabase/migrations/000_combined_idempotent.sql` の内容を実行する（`001_init.sql` 〜 `003_persona_shares.sql` をまとめた、何度実行しても安全なスクリプト）
+2. Supabase の SQL Editor で `supabase/migrations/000_combined_idempotent.sql` の内容を実行する（`001_init.sql` 〜 `004_join_approval.sql` をまとめた、何度実行しても安全なスクリプト）
 3. `.env.example` を `.env.local` にコピーし、値を埋める
 
 ```bash
@@ -31,7 +31,7 @@ npm run dev
 1. `/login` で新規登録（メールアドレス・パスワード）
 2. 初回ログイン後、自動的に `/onboarding` に案内される
    - 「組織を作る」→ 自分が管理者になる
-   - 既に組織がある場合は、管理者から共有された招待コードで「参加する」
+   - 既に組織がある場合は、管理者から共有された招待コードで「申請する」。**即時参加ではなく、組織の管理者が `/org` の「参加申請」で承認するまでは組織に入れない**
 3. `/personas/new` でペルソナ（AI人格）を作成する
    - 公開範囲を「自分のみ」「チーム内」「組織全体」から選べる
 4. ペルソナ詳細ページから「壁打ちを始める」で1対1チャット

@@ -66,6 +66,18 @@ export interface PersonaShare {
   created_at: string
 }
 
+export type JoinRequestStatus = 'pending' | 'approved' | 'rejected'
+
+export interface JoinRequest {
+  id: string
+  org_id: string
+  user_id: string
+  requester_display_name: string
+  status: JoinRequestStatus
+  created_at: string
+  resolved_at: string | null
+}
+
 export type PersonaFeedbackStatus = 'pending' | 'applied' | 'dismissed'
 
 export interface PersonaFeedback {

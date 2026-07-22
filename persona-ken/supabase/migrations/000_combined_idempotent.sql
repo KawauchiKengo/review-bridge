@@ -115,21 +115,6 @@ begin
 end;
 $$ language plpgsql security definer;
 
--- 招待コードで組織に参加
-create or replace function join_organization(code text)
-returns boolean as $$
-declare
-  target_org_id uuid;
-begin
-  select id into target_org_id from organizations where invite_code = code;
-  if target_org_id is null then
-    return false;
-  end if;
-  update profiles set org_id = target_org_id, role = 'member' where id = auth.uid();
-  return true;
-end;
-$$ language plpgsql security definer;
-
 -- ペルソナの個人単位共有（visibilityとは独立に、特定のユーザーにだけ閲覧・壁打ち権限を渡す）
 create table if not exists persona_shares (
   persona_id uuid not null references personas(id) on delete cascade,
@@ -138,6 +123,62 @@ create table if not exists persona_shares (
   created_at timestamptz default now(),
   primary key (persona_id, user_id)
 );
+
+-- 組織参加の申請（招待コード入力は即時参加ではなく申請になり、管理者の承認を要する）
+create table if not exists join_requests (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  user_id uuid not null references profiles(id) on delete cascade,
+  requester_display_name text not null,
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  created_at timestamptz default now(),
+  resolved_at timestamptz
+);
+
+-- 招待コードで組織への参加を「申請」する（即時参加はしない）
+drop function if exists join_organization(text);
+create or replace function request_join_organization(code text)
+returns boolean as $$
+declare
+  target_org_id uuid;
+  requester_name text;
+begin
+  select id into target_org_id from organizations where invite_code = code;
+  if target_org_id is null then
+    return false;
+  end if;
+
+  select display_name into requester_name from profiles where id = auth.uid();
+
+  insert into join_requests (org_id, user_id, requester_display_name, status)
+  values (target_org_id, auth.uid(), requester_name, 'pending');
+
+  return true;
+end;
+$$ language plpgsql security definer;
+
+-- 管理者が申請を承認する（承認された人のprofilesを更新する）
+create or replace function approve_join_request(request_id uuid)
+returns boolean as $$
+declare
+  req join_requests;
+begin
+  select * into req from join_requests where id = request_id and status = 'pending';
+  if req is null then
+    return false;
+  end if;
+
+  if not exists (
+    select 1 from profiles where id = auth.uid() and org_id = req.org_id and role = 'admin'
+  ) then
+    return false;
+  end if;
+
+  update profiles set org_id = req.org_id, role = 'member' where id = req.user_id;
+  update join_requests set status = 'approved', resolved_at = now() where id = request_id;
+  return true;
+end;
+$$ language plpgsql security definer;
 
 -- org_id / role は上記の関数経由でのみ変更させる（本人の直接更新は表示名のみ）
 revoke update on profiles from authenticated;
@@ -153,6 +194,7 @@ alter table conversation_personas enable row level security;
 alter table messages enable row level security;
 alter table persona_feedback enable row level security;
 alter table persona_shares enable row level security;
+alter table join_requests enable row level security;
 
 drop policy if exists "select own organization" on organizations;
 create policy "select own organization" on organizations
@@ -272,4 +314,20 @@ drop policy if exists "owner revokes share" on persona_shares;
 create policy "owner revokes share" on persona_shares
   for delete using (
     persona_id in (select id from personas where owner_id = auth.uid())
+  );
+
+drop policy if exists "select own or admin org requests" on join_requests;
+create policy "select own or admin org requests" on join_requests
+  for select using (
+    user_id = auth.uid()
+    or org_id in (select org_id from profiles where id = auth.uid() and role = 'admin')
+  );
+
+drop policy if exists "admin rejects join requests" on join_requests;
+create policy "admin rejects join requests" on join_requests
+  for update using (
+    org_id in (select org_id from profiles where id = auth.uid() and role = 'admin')
+  )
+  with check (
+    status = 'rejected'
   );
