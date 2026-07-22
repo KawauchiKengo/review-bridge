@@ -23,7 +23,16 @@ export default function LoginPage() {
         : await supabase.auth.signUp({ email, password })
 
     if (authError) {
-      setError(authError.message || '処理に失敗しました。時間をおいて再度お試しください。')
+      console.error('auth error:', authError)
+      const details = [
+        authError.message,
+        authError.name ? `name: ${authError.name}` : null,
+        'status' in authError ? `status: ${(authError as { status?: number }).status}` : null,
+        'code' in authError ? `code: ${(authError as { code?: string }).code}` : null,
+      ]
+        .filter(Boolean)
+        .join(' / ')
+      setError(details || `不明なエラー: ${JSON.stringify(authError)}`)
       setLoading(false)
       return
     }
