@@ -71,8 +71,10 @@ export default function DashboardPage() {
               <h2 className="font-semibold text-gray-900">{p.name}</h2>
               <span className="text-xs text-gray-400">{visibilityLabel[p.visibility]}</span>
             </div>
-            {p.role && <p className="text-sm text-gray-500">{p.role}</p>}
-            {p.viewpoint && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{p.viewpoint}</p>}
+            {p.owner_id === profile.id && p.role && <p className="text-sm text-gray-500">{p.role}</p>}
+            {p.owner_id === profile.id && p.viewpoint && (
+              <p className="text-xs text-gray-400 mt-1 line-clamp-2">{p.viewpoint}</p>
+            )}
           </Link>
         ))}
       </div>
