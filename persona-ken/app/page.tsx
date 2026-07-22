@@ -41,23 +41,31 @@ export default function DashboardPage() {
           >
             会話ログ
           </Link>
-          <Link
-            href="/chat/new-multi"
-            className="border border-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            複数人で議論する
-          </Link>
-          <Link
-            href="/personas/new"
-            className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            + ペルソナを作る
-          </Link>
+          {profile.role === 'admin' && (
+            <>
+              <Link
+                href="/chat/new-multi"
+                className="border border-gray-300 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                複数人で議論する
+              </Link>
+              <Link
+                href="/personas/new"
+                className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                + ペルソナを作る
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
       {personas.length === 0 && (
-        <p className="text-sm text-gray-500">まだペルソナがありません。最初のペルソナを作ってみましょう。</p>
+        <p className="text-sm text-gray-500">
+          {profile.role === 'admin'
+            ? 'まだペルソナがありません。最初のペルソナを作ってみましょう。'
+            : 'まだ共有されたペルソナがありません。管理者に共有を依頼してください。'}
+        </p>
       )}
 
       <div className="grid grid-cols-2 gap-4">
