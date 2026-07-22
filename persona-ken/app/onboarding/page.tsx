@@ -1,13 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { JoinRequest } from '@/types'
 
 export default function OnboardingPage() {
-  const router = useRouter()
-  const [orgName, setOrgName] = useState('')
   const [inviteCode, setInviteCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -35,21 +32,6 @@ export default function OnboardingPage() {
     setCheckingRequest(false)
   }
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    const { error: rpcError } = await supabase.rpc('create_organization', { org_name: orgName })
-    if (rpcError) {
-      setError(rpcError.message)
-      setLoading(false)
-      return
-    }
-    router.push('/')
-    router.refresh()
-  }
-
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -70,27 +52,8 @@ export default function OnboardingPage() {
     <div className="max-w-md mx-auto mt-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">組織の設定</h1>
-        <p className="text-sm text-gray-500 mt-1">ペルソナはチーム・組織単位で共有できます。まずは所属先を決めてください。</p>
+        <p className="text-sm text-gray-500 mt-1">管理者から共有された招待コードを入力してください。</p>
       </div>
-
-      <form onSubmit={handleCreate} className="bg-white border border-gray-200 rounded-xl p-6 space-y-3">
-        <h2 className="font-semibold text-gray-900">新しく組織を作る</h2>
-        <input
-          type="text"
-          value={orgName}
-          onChange={(e) => setOrgName(e.target.value)}
-          required
-          placeholder="組織名（例: 営業部）"
-          className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white text-sm py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-        >
-          作成する（自分が管理者になります）
-        </button>
-      </form>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-3">
         <h2 className="font-semibold text-gray-900">招待コードで参加する</h2>
