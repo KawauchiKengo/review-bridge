@@ -181,26 +181,32 @@ end;
 $$ language plpgsql security definer set search_path = public;
 
 -- profilesのRLSポリシーがprofiles自身をサブクエリで参照すると無限再帰になるため、
--- SECURITY DEFINER関数（内部でRLSをバイパスする）経由にする
+-- SECURITY DEFINER関数（内部でRLSをバイパスする）経由にする。
+-- language sqlはプランナにインライン展開されSECURITY DEFINERが無効化されることがあるため、
+-- 展開されないplpgsqlを使う。
 create or replace function get_my_org_id()
 returns uuid
-language sql
+language plpgsql
 security definer
 stable
 set search_path = public
 as $$
-  select org_id from profiles where id = auth.uid()
+begin
+  return (select org_id from profiles where id = auth.uid());
+end;
 $$;
 
 -- personasとpersona_sharesが互いのポリシーを参照し合うと無限再帰になるため、同様の対処
 create or replace function get_my_persona_ids()
 returns setof uuid
-language sql
+language plpgsql
 security definer
 stable
 set search_path = public
 as $$
-  select id from personas where owner_id = auth.uid()
+begin
+  return query select id from personas where owner_id = auth.uid();
+end;
 $$;
 
 -- org_id / role は上記の関数経由でのみ変更させる（本人の直接更新は表示名のみ）
