@@ -190,6 +190,7 @@ language plpgsql
 security definer
 stable
 set search_path = public
+set row_security = off
 as $$
 begin
   return (select org_id from profiles where id = auth.uid());
@@ -203,6 +204,7 @@ language plpgsql
 security definer
 stable
 set search_path = public
+set row_security = off
 as $$
 begin
   return query select id from personas where owner_id = auth.uid();
