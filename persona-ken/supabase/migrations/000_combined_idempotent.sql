@@ -266,13 +266,27 @@ create policy "admin manages team members" on team_members
     )
   );
 
+-- personas -> persona_shares への参照も関数経由にし、双方向とも無限再帰を防ぐ
+create or replace function get_shared_persona_ids()
+returns setof uuid
+language plpgsql
+security definer
+stable
+set search_path = public
+set row_security = off
+as $$
+begin
+  return query select persona_id from persona_shares where user_id = auth.uid();
+end;
+$$;
+
 drop policy if exists "select visible personas" on personas;
 create policy "select visible personas" on personas
   for select using (
     owner_id = auth.uid()
-    or (visibility = 'org' and org_id in (select org_id from profiles where id = auth.uid()))
+    or (visibility = 'org' and org_id = get_my_org_id())
     or (visibility = 'team' and team_id in (select team_id from team_members where user_id = auth.uid()))
-    or id in (select persona_id from persona_shares where user_id = auth.uid())
+    or id in (select get_shared_persona_ids())
   );
 drop policy if exists "insert own personas" on personas;
 create policy "insert own personas" on personas
@@ -334,17 +348,16 @@ drop policy if exists "owner shares persona" on persona_shares;
 create policy "owner shares persona" on persona_shares
   for insert with check (
     shared_by = auth.uid()
-    and persona_id in (select id from personas where owner_id = auth.uid())
+    and persona_id in (select get_my_persona_ids())
     and user_id in (
-      select id from profiles
-      where org_id = (select org_id from personas where id = persona_id)
+      select id from profiles where org_id = get_my_org_id()
     )
   );
 
 drop policy if exists "owner revokes share" on persona_shares;
 create policy "owner revokes share" on persona_shares
   for delete using (
-    persona_id in (select id from personas where owner_id = auth.uid())
+    persona_id in (select get_my_persona_ids())
   );
 
 drop policy if exists "select own or admin org requests" on join_requests;
