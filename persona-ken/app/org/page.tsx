@@ -87,6 +87,8 @@ export default function OrgPage() {
 
   const isAdmin = profile.role === 'admin'
 
+  if (!isAdmin) return <p className="text-gray-500 text-sm">このページは管理者のみ利用できます</p>
+
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <div>

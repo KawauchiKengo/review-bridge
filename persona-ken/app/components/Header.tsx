@@ -43,13 +43,15 @@ export default function Header() {
         {loggedIn && (
           <nav className="flex items-center gap-4 text-sm">
             {isAdmin && (
-              <Link href="/personas/new" className="text-gray-600 hover:text-gray-900">
-                ペルソナを作る
-              </Link>
+              <>
+                <Link href="/personas/new" className="text-gray-600 hover:text-gray-900">
+                  ペルソナを作る
+                </Link>
+                <Link href="/org" className="text-gray-600 hover:text-gray-900">
+                  組織設定
+                </Link>
+              </>
             )}
-            <Link href="/org" className="text-gray-600 hover:text-gray-900">
-              組織設定
-            </Link>
             <button onClick={handleLogout} className="text-gray-400 hover:text-gray-700">
               ログアウト
             </button>
